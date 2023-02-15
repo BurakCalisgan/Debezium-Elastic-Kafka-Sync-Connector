@@ -1,0 +1,125 @@
+version: '3.4'
+
+services:
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper
+    ports:
+    - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+    - ui-network
+
+  sqlserver:
+    container_name: sqlserver
+    image: mcr.microsoft.com/mssql/server
+    ports:
+    - 1433:1433
+    environment:
+    - ACCEPT_EULA=Y
+    - MSSQL_PID=Standard
+    - SA_PASSWORD=Password123321
+    - MSSQL_AGENT_ENABLED=true
+    networks:
+    - ui-network
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka
+    depends_on:
+    - zookeeper
+    - sqlserver
+    ports:
+    - "29092:29092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_CLEANER_DELETE_RETENTION_MS: 5000
+      KAFKA_BROKER_ID: 1
+    networks:
+    - ui-network
+
+  connect:
+    container_name: connect
+    image: debezium/connect-jdbc-es:latest
+    build:
+      context: debezium-jdbc-es
+      args:
+        DEBEZIUM_VERSION: latest
+    ports:
+     - 8083:8083
+    links:
+     - kafka
+     - sqlserver
+     - elasticsearch
+    environment:
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_source_connect_statuses
+      BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+    networks:
+    - ui-network
+    - elastic
+  
+  debezium-ui:
+    container_name: debezium-ui
+    image: debezium/debezium-ui:latest
+    ports:
+    - "28080:8080"
+    environment:
+      KAFKA_CONNECT_URIS: http://connect:8083
+    depends_on:
+    - connect
+    networks:
+    - ui-network
+  
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.3
+    ports:
+    - 9200:9200
+    volumes:
+    - elasticsearch-data:/usr/share/elasticsearch/data
+    environment:
+    - xpack.monitoring.enabled=true
+    - xpack.watcher.enabled=false
+    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    - discovery.type=single-node
+    - ELASTICSEARCH_USERNAME=elastic
+    - ELASTICSEARCH_PASSWORD=elastic
+    networks:
+    - elastic
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:7.16.3
+    ports:
+    - 5601:5601
+    depends_on:
+    - elasticsearch
+    environment:
+    - ELASTICSEARCH_URL=http://localhost:9200
+    - ELASTICSEARCH_USERNAME=elastic
+    - ELASTICSEARCH_PASSWORD=elastic
+    networks:
+    - elastic
+  
+networks:
+  elastic:
+    driver: bridge
+  ui-network:
+    external: false
+
+volumes:
+  elasticsearch-data:
