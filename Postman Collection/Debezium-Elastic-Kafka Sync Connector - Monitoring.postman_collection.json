@@ -1,0 +1,185 @@
+{
+	"info": {
+		"_postman_id": "49724336-8b4a-4219-8d9e-14adc3d6846f",
+		"name": "Debezium-Elastic-Kafka Sync Connector - Monitoring",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "4598437"
+	},
+	"item": [
+		{
+			"name": "Add Connector for MSSQL For Exception Log",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"elastic-exception-log-connector\",\r\n    \"config\": {\r\n        \"connector.class\": \"io.debezium.connector.sqlserver.SqlServerConnector\",\r\n        \"tasks.max\": \"1\",\r\n        \"database.hostname\": \"sqlserver\",\r\n        \"database.port\": \"1433\",\r\n        \"database.user\": \"sa\",\r\n        \"database.password\": \"Password123321\",\r\n        \"database.names\": \"ECOM_MONITOR\",\r\n        \"topic.prefix\": \"db-logs\", \r\n        \"table.include.list\": \"dbo.ExceptionLog\", \r\n        \"schema.history.internal.kafka.bootstrap.servers\": \"kafka:9092\", \r\n        \"schema.history.internal.kafka.topic\": \"exception-log\",\r\n        \"database.encrypt\": \"false\",\r\n        \"time.precision.mode\": \"connect\",\r\n        \"transforms\": \"unwrap,date\",\r\n        \"transforms.unwrap.type\": \"io.debezium.transforms.ExtractNewRecordState\",\r\n        \"transforms.unwrap.drop.tombstones\": true,\r\n        \"transforms.unwrap.add.fields\": \"op,table\",\r\n        \"transforms.unwrap.delete.handling.mode\": \"rewrite\",\r\n        \"transforms.date.type\": \"org.apache.kafka.connect.transforms.TimestampConverter$Value\",\r\n        \"transforms.date.target.type\": \"string\",\r\n        \"transforms.date.field\": \"Date\",\r\n        \"transforms.date.format\": \"yyyy-MM-dd'T'HH:mm:ss\",\r\n        \"snapshot.mode\": \"schema_only\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/connectors",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Connector for MSSQL For HttpClient Log",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"elastic-httpclient-log-connector\",\r\n    \"config\": {\r\n        \"connector.class\": \"io.debezium.connector.sqlserver.SqlServerConnector\",\r\n        \"tasks.max\": \"1\",\r\n        \"database.hostname\": \"sqlserver\",\r\n        \"database.port\": \"1433\",\r\n        \"database.user\": \"sa\",\r\n        \"database.password\": \"Password123321\",\r\n        \"database.names\": \"ECOM_MONITOR\",\r\n        \"topic.prefix\": \"db-logs\", \r\n        \"table.include.list\": \"dbo.HttpClientLog\", \r\n        \"schema.history.internal.kafka.bootstrap.servers\": \"kafka:9092\", \r\n        \"schema.history.internal.kafka.topic\": \"httpclient-log\",\r\n        \"database.encrypt\": \"false\",\r\n        \"time.precision.mode\": \"connect\",\r\n        \"transforms\": \"unwrap,date\",\r\n        \"transforms.unwrap.type\": \"io.debezium.transforms.ExtractNewRecordState\",\r\n        \"transforms.unwrap.drop.tombstones\": true,\r\n        \"transforms.unwrap.add.fields\": \"op,table\",\r\n        \"transforms.unwrap.delete.handling.mode\": \"rewrite\",\r\n        \"transforms.date.type\": \"org.apache.kafka.connect.transforms.TimestampConverter$Value\",\r\n        \"transforms.date.target.type\": \"string\",\r\n        \"transforms.date.field\": \"Date\",\r\n        \"transforms.date.format\": \"yyyy-MM-dd'T'HH:mm:ss\",\r\n        \"snapshot.mode\": \"schema_only\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/connectors",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Connector for Elastic Sync For Exception Log",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"elastic-sink-exception-log\",\r\n    \"config\": {\r\n        \"connector.class\": \"io.confluent.connect.elasticsearch.ElasticsearchSinkConnector\",\r\n        \"tasks.max\": \"1\",\r\n        \"topics\": \"db-logs.ECOM_MONITOR.dbo.ExceptionLog\",\r\n        \"connection.url\": \"http://elasticsearch:9200\",\r\n        \"key.converter\": \"org.apache.kafka.connect.json.JsonConverter\",\r\n        \"key.converter.schemas.enable\": \"false\",\r\n        \"value.converter\": \"org.apache.kafka.connect.json.JsonConverter\",\r\n        \"value.converter.schemas.enable\": \"false\",\r\n        \"key.ignore\": \"true\",\r\n        \"schema.ignore\": \"true\",\r\n        \"transforms\": \"unwrap,key\",\r\n        \"transforms.unwrap.type\": \"io.debezium.transforms.ExtractNewRecordState\",\r\n        \"transforms.unwrap.drop.tombstones\": \"false\",\r\n        \"transforms.key.type\": \"org.apache.kafka.connect.transforms.ExtractField$Key\",\r\n        \"transforms.key.field\": \"id\",\r\n        \"type.name\": \"exception-log\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/connectors",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Connector for Elastic Sync For HttpClient Log",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"elastic-sink-httpclient-log\",\r\n    \"config\": {\r\n        \"connector.class\": \"io.confluent.connect.elasticsearch.ElasticsearchSinkConnector\",\r\n        \"tasks.max\": \"1\",\r\n        \"topics\": \"db-logs.ECOM_MONITOR.dbo.HttpClientLog\",\r\n        \"connection.url\": \"http://elasticsearch:9200\",\r\n        \"key.converter\": \"org.apache.kafka.connect.json.JsonConverter\",\r\n        \"key.converter.schemas.enable\": \"false\",\r\n        \"value.converter\": \"org.apache.kafka.connect.json.JsonConverter\",\r\n        \"value.converter.schemas.enable\": \"false\",\r\n        \"key.ignore\": \"true\",\r\n        \"schema.ignore\": \"true\",\r\n        \"transforms\": \"unwrap,key\",\r\n        \"transforms.unwrap.type\": \"io.debezium.transforms.ExtractNewRecordState\",\r\n        \"transforms.unwrap.drop.tombstones\": \"false\",\r\n        \"transforms.key.type\": \"org.apache.kafka.connect.transforms.ExtractField$Key\",\r\n        \"transforms.key.field\": \"id\",\r\n        \"type.name\": \"httpclient-log\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/connectors",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Connectors",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8083/connectors",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Connector",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8083/connectors/elastic-error-connector",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors",
+						"elastic-error-connector"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
